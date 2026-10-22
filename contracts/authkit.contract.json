@@ -1,0 +1,323 @@
+{
+  "contractVersion": "1.1.0",
+  "description": "Normative AuthKit contract shared by the .NET and TypeScript implementations. Any change here requires a matching change in both SDKs and in their parity tests.",
+  "types": {
+    "AuthUser": {
+      "fields": {
+        "id": "string",
+        "email": "string?",
+        "phone": "string?",
+        "emailConfirmedAt": "datetime?",
+        "phoneConfirmedAt": "datetime?",
+        "displayName": "string?",
+        "metadata": "record<string,string>",
+        "identity": "AuthIdentity?"
+      }
+    },
+    "AuthSession": {
+      "fields": {
+        "accessToken": "string",
+        "refreshToken": "string?",
+        "expiresAt": "datetime",
+        "tokenType": "string",
+        "user": "AuthUser",
+        "provider": "AuthProviderSnapshot?"
+      }
+    },
+    "AuthErrorCode": {
+      "enum": [
+        "invalid_credentials",
+        "email_not_confirmed",
+        "user_already_exists",
+        "weak_password",
+        "otp_expired",
+        "invalid_otp",
+        "rate_limited",
+        "provider_disabled",
+        "mfa_required",
+        "session_expired",
+        "network_error",
+        "unknown",
+        "federation_cancelled",
+        "federation_failed",
+        "loa_not_met",
+        "certificate_invalid",
+        "identity_not_verified",
+        "tenant_mismatch",
+        "provider_not_configured",
+        "provider_ambiguous",
+        "session_conflict",
+        "provider_ref_malformed"
+      ]
+    },
+    "AuthError": {
+      "fields": {
+        "code": "AuthErrorCode",
+        "message": "string",
+        "statusCode": "int?"
+      }
+    },
+    "AuthNextStep": {
+      "enum": ["none", "confirm_email", "verify_otp", "mfa"]
+    },
+    "AuthResult": {
+      "fields": {
+        "ok": "bool",
+        "session": "AuthSession?",
+        "error": "AuthError?",
+        "nextStep": "AuthNextStep"
+      }
+    },
+    "AuthState": {
+      "enum": [
+        "idle",
+        "submitting",
+        "awaiting_email_confirmation",
+        "awaiting_otp",
+        "redirecting",
+        "authenticated",
+        "error"
+      ]
+    },
+    "AuthCapabilities": {
+      "fields": {
+        "password": "bool",
+        "signUp": "bool",
+        "magicLink": "bool",
+        "emailOtp": "bool",
+        "phoneOtp": "bool",
+        "passwordRecovery": "bool",
+        "mfa": "bool",
+        "socialProviders": "string[]",
+        "federation": "AuthFederationProvider[]"
+      }
+    },
+    "AuthDocumentType": {
+      "enum": ["dni", "nie", "cif", "unknown"]
+    },
+    "AuthAssuranceLevel": {
+      "enum": ["low", "substantial", "high"]
+    },
+    "AuthIdentity": {
+      "fields": {
+        "subject": "string",
+        "documentType": "AuthDocumentType",
+        "documentId": "string",
+        "documentIdRaw": "string?",
+        "givenName": "string?",
+        "familyName": "string?",
+        "dateOfBirth": "date?",
+        "level": "AuthAssuranceLevel",
+        "method": "string",
+        "tenant": "string?",
+        "representedDocumentId": "string?",
+        "authenticatedAt": "datetime"
+      }
+    },
+    "AuthFederationMethod": {
+      "fields": {
+        "id": "string",
+        "displayName": "string",
+        "description": "string?",
+        "levels": "AuthAssuranceLevel[]",
+        "recommended": "bool"
+      }
+    },
+    "AuthFederationProvider": {
+      "fields": {
+        "id": "string",
+        "kind": "string",
+        "displayName": "string",
+        "description": "string?",
+        "iconUrl": "string?",
+        "methods": "AuthFederationMethod[]",
+        "levels": "AuthAssuranceLevel[]",
+        "isPrimary": "bool"
+      }
+    },
+    "AuthProviderSnapshot": {
+      "fields": {
+        "ref": "string",
+        "audience": "string",
+        "providerId": "string",
+        "kind": "string",
+        "displayName": "string",
+        "origin": "string",
+        "tenant": "string?",
+        "capturedAt": "datetime"
+      }
+    },
+    "AuthProviderRef": {
+      "fields": {
+        "audience": "string",
+        "providerId": "string"
+      },
+      "notes": "Canonical wire form is audience/providerId."
+    },
+    "AuthTheme": {
+      "fields": {
+        "primary": "string",
+        "background": "string",
+        "surface": "string",
+        "text": "string",
+        "textMuted": "string",
+        "border": "string",
+        "danger": "string",
+        "radius": "string",
+        "spacing": "string",
+        "fontFamily": "string",
+        "logoUrl": "string?"
+      }
+    },
+    "AuthMessageKey": {
+      "enum": [
+        "signIn",
+        "signUp",
+        "email",
+        "password",
+        "confirmPassword",
+        "forgotPassword",
+        "dontHaveAccount",
+        "haveAccount",
+        "sendResetEmail",
+        "resetEmailSent",
+        "backToSignIn",
+        "magicLink",
+        "checkYourEmail",
+        "signingIn",
+        "continueWithProvider",
+        "requiredField",
+        "invalidEmail",
+        "passwordTooShort",
+        "passwordMismatch",
+        "invalidOtp",
+        "enterOtp",
+        "verify",
+        "newPassword",
+        "updatePassword",
+        "passwordUpdated",
+        "showPassword",
+        "hidePassword",
+        "unexpectedError",
+        "sessionExpired"
+      ]
+    }
+  },
+  "operations": [
+    {
+      "name": "signInWithPassword",
+      "parameters": {
+        "email": "string",
+        "password": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "signUpWithPassword",
+      "parameters": {
+        "email": "string",
+        "password": "string",
+        "metadata": "record<string,string>?"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "sendMagicLink",
+      "parameters": {
+        "email": "string",
+        "redirectTo": "string?"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "sendPasswordReset",
+      "parameters": {
+        "email": "string",
+        "redirectTo": "string?"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "updatePassword",
+      "parameters": {
+        "newPassword": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "sendEmailOtp",
+      "parameters": {
+        "email": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "verifyEmailOtp",
+      "parameters": {
+        "email": "string",
+        "token": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "sendPhoneOtp",
+      "parameters": {
+        "phone": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "verifyPhoneOtp",
+      "parameters": {
+        "phone": "string",
+        "token": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "beginOAuth",
+      "parameters": {
+        "provider": "string",
+        "redirectTo": "string?"
+      },
+      "returns": "string",
+      "notes": "Returns the provider authorization URL. The host is responsible for navigating to it."
+    },
+    {
+      "name": "completeOAuth",
+      "parameters": {
+        "callbackUrl": "string"
+      },
+      "returns": "AuthResult"
+    },
+    {
+      "name": "refreshSession",
+      "parameters": {},
+      "returns": "AuthResult"
+    },
+    {
+      "name": "signOut",
+      "parameters": {},
+      "returns": "void"
+    },
+    {
+      "name": "beginFederation",
+      "parameters": {
+        "providerRef": "string",
+        "level": "AuthAssuranceLevel",
+        "method": "string?",
+        "returnUrl": "string?"
+      },
+      "returns": "string",
+      "notes": "Returns the host login URL. Server-driven federations never navigate on their own."
+    },
+    {
+      "name": "completeFederation",
+      "parameters": {
+        "callbackUrl": "string"
+      },
+      "returns": "AuthResult",
+      "notes": "Reads the host's redirect outcome. Performs no network call and no token exchange."
+    }
+  ]
+}

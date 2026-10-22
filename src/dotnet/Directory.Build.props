@@ -1,0 +1,41 @@
+<Project>
+
+  <!--
+    Shared build settings for every AuthKit .NET package.
+    Versions are injected by semantic-release (see scripts/set-version.mjs).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Supply-chain: NuGet audit is blocking, including transitive packages. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+
+    <Authors>Carlos H. Carniatto and AuthKit contributors</Authors>
+    <Company>AuthKit</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/carloshenriquecarniatto/AuthKit</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/carloshenriquecarniatto/AuthKit</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PackageTags>auth;authentication;supabase;clave;eidas;saml;blazor;angular;aurelia;authkit</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="version.props" Condition="Exists('version.props')" />
+
+</Project>

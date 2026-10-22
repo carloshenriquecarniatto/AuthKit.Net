@@ -1,0 +1,31 @@
+{
+  "name": "authkit-net",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AuthKit for .NET: core contracts, the Supabase provider, Blazor components and the Cl@ve/eIDAS federation library.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/carloshenriquecarniatto/AuthKit.Net"
+  },
+  "scripts": {
+    "prepare": "node scripts/install-hooks.mjs",
+    "hooks": "node scripts/install-hooks.mjs",
+    "format": "prettier --write \"**/*.{md,json,yml,yaml,ts,html,css}\"",
+    "format:check": "prettier --check \"**/*.{md,json,yml,yaml,ts,html,css}\"",
+    "release": "semantic-release",
+    "test:contracts": "node --test contracts/test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "prettier": "^3.6.2",
+    "semantic-release": "^25.0.9"
+  }
+}

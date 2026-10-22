@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Blocks secrets, generated artifacts and formatting drift before they reach the repository.
+set -euo pipefail
+
+[ "${AUTHKIT_SKIP_HOOKS:-0}" = "1" ] && exit 0
+
+staged="$(git diff --cached --name-only --diff-filter=ACM)"
+
+[ -z "$staged" ] && exit 0
+
+fail() {
+  echo "pre-commit: $1"
+  exit 1
+}
+
+# 1. Secrets and environment files.
+if printf '%s\n' "$staged" | grep -Eq '(^|/)\.env(\.|$)'; then
+  fail "environment files must not be committed."
+fi
+
+if printf '%s\n' "$staged" | grep -Eq '\.(pem|p12|pfx|key)$'; then
+  fail "private key material must not be committed."
+fi
+
+# 2. Build output and vendored dependencies.
+if printf '%s\n' "$staged" | grep -Eq '(^|/)(bin|obj|node_modules|dist|coverage|artifacts)/'; then
+  fail "build output must not be committed."
+fi
+
+# 3. Large files.
+while IFS= read -r file; do
+  [ -f "$file" ] || continue
+  size="$(wc -c < "$file" | tr -d ' ')"
+  if [ "$size" -gt 2097152 ]; then
+    fail "$file is larger than 2 MB."
+  fi
+done <<< "$staged"
+
+# 4. Token material in the diff itself.
+if git diff --cached -U0 -- . | grep -nE '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[^[:space:]]+|SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[^[:space:]]+)' >/dev/null; then
+  fail "the diff appears to contain a service role key or private key."
+fi
+
+# 5. Formatting of files Prettier owns.
+if [ -x node_modules/.bin/prettier ]; then
+  prettier_targets="$(printf '%s\n' "$staged" | grep -E '\.(md|json|yml|yaml)$' || true)"
+  if [ -n "$prettier_targets" ]; then
+    printf '%s\n' "$prettier_targets" | xargs node_modules/.bin/prettier --check >/dev/null || \
+      fail "run 'npm run format' and stage the result."
+  fi
+fi
+
+exit 0

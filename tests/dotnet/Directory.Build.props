@@ -1,0 +1,11 @@
+<Project>
+  <!-- Test projects share the SDK settings and package versions of the libraries. -->
+  <Import Project="../../src/dotnet/Directory.Build.props" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Underscored names are the xUnit convention; a test name is a sentence, not an API. -->
+    <NoWarn>$(NoWarn);CA1707;CA1861;CA2007</NoWarn>
+  </PropertyGroup>
+</Project>

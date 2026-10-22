@@ -1,0 +1,187 @@
+@namespace AuthKit.Blazor
+
+@*
+    Renders one control per declared method, plus a level selector when more than one level
+    applies. Everything comes from the descriptor: there is no switch on a provider or method id,
+    so a new Cl@ve method needs no component change. See docs/spec-clave.md §8.
+*@
+
+<div class="ak-federation" data-provider="@Descriptor.Id">
+    @if (Descriptor.IconUrl is not null)
+    {
+        <img class="ak-federation-icon" src="@Descriptor.IconUrl" alt="" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Descriptor.Description))
+    {
+        <p class="ak-federation-description">@Descriptor.Description</p>
+    }
+
+    @if (ShowLevelSelector && EffectiveLevels.Count > 1)
+    {
+        <div class="ak-field">
+            <label for="@levelId">@LevelLabelText</label>
+            <select id="@levelId" class="ak-input" value="@SelectedLevel" @onchange="OnLevelChanged">
+                @foreach (var level in EffectiveLevels)
+                {
+                    <option value="@level">@LevelLabel(level)</option>
+                }
+            </select>
+        </div>
+    }
+
+    @if (Descriptor.Methods.Count == 0)
+    {
+        <div class="ak-error" role="alert">@EmptyMessage</div>
+    }
+    else
+    {
+        <div class="ak-federation-methods">
+            @foreach (var method in Descriptor.Methods)
+            {
+                var url = BuildUrl(method);
+                @if (OnNavigate.HasDelegate)
+                {
+                    <button type="button" class="ak-federation-method" @onclick="() => NavigateAsync(url)">
+                        <span>@method.DisplayName</span>
+                        @if (!string.IsNullOrWhiteSpace(method.Description))
+                        {
+                            <small>@method.Description</small>
+                        }
+                    </button>
+                }
+                else
+                {
+                    <a class="ak-federation-method" href="@url">
+                        <span>@method.DisplayName</span>
+                        @if (!string.IsNullOrWhiteSpace(method.Description))
+                        {
+                            <small>@method.Description</small>
+                        }
+                    </a>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string levelId = "ak-level-" + Guid.NewGuid().ToString("N");
+    private AuthAssuranceLevel selectedLevel;
+
+    /// <summary>
+    /// Provider descriptor, usually built from <c>Capabilities.Federation</c>. Required: the
+    /// component renders nothing it was not given.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public AuthFederationProvider Descriptor { get; set; } = null!;
+
+    /// <summary>Forces a level. When null, the user picks among the descriptor's levels.</summary>
+    [Parameter]
+    public AuthAssuranceLevel? Level { get; set; }
+
+    /// <summary>Where the user should land after the federation.</summary>
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
+    /// <summary>Host login route that starts the federation.</summary>
+    [Parameter]
+    public string LoginPath { get; set; } = "/clave/login";
+
+    /// <summary>Whether the level selector is rendered when more than one level applies.</summary>
+    [Parameter]
+    public bool ShowLevelSelector { get; set; } = true;
+
+    /// <summary>Label shown above the level selector.</summary>
+    [Parameter]
+    public string LevelLabelText { get; set; } = "Level of assurance";
+
+    /// <summary>Shown when the descriptor declares no method.</summary>
+    [Parameter]
+    public string EmptyMessage { get; set; } = "No login method is available.";
+
+    /// <summary>
+    /// Optional navigation callback. When bound, the component renders buttons and the host
+    /// navigates. When absent, it renders plain links, which the browser follows and the host
+    /// still owns.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnNavigate { get; set; }
+
+    /// <summary>Labels for the level selector, supplied by the host.</summary>
+    [Parameter]
+    public IReadOnlyDictionary<AuthAssuranceLevel, string> LevelLabels { get; set; } =
+        new Dictionary<AuthAssuranceLevel, string>
+        {
+            [AuthAssuranceLevel.Low] = "Low",
+            [AuthAssuranceLevel.Substantial] = "Substantial",
+            [AuthAssuranceLevel.High] = "High"
+        };
+
+    // Only the levels a declared method can actually grant are offered. The descriptor's own list
+    // is the fallback for providers that do not describe levels per method.
+    private IReadOnlyList<AuthAssuranceLevel> EffectiveLevels
+    {
+        get
+        {
+            if (Level is not null)
+            {
+                return [Level.Value];
+            }
+
+            var fromMethods = Descriptor.Methods
+                .SelectMany(method => method.Levels)
+                .Distinct()
+                .OrderBy(level => level)
+                .ToArray();
+
+            return fromMethods.Length > 0 ? fromMethods : Descriptor.Levels;
+        }
+    }
+
+    private AuthAssuranceLevel SelectedLevel => Level ?? selectedLevel;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+    {
+        var levels = EffectiveLevels;
+        if (Level is not null || levels.Count == 0)
+        {
+            selectedLevel = Level ?? AuthAssuranceLevel.Substantial;
+            return;
+        }
+
+        if (!levels.Contains(selectedLevel))
+        {
+            var recommended = Descriptor.Methods.FirstOrDefault(method => method.Recommended);
+            selectedLevel = recommended?.Levels.FirstOrDefault() ?? levels[0];
+        }
+    }
+
+    private string LevelLabel(AuthAssuranceLevel level) =>
+        LevelLabels.TryGetValue(level, out var label) ? label : level.ToString();
+
+    private void OnLevelChanged(ChangeEventArgs args)
+    {
+        if (Enum.TryParse<AuthAssuranceLevel>(args.Value?.ToString(), ignoreCase: true, out var parsed))
+        {
+            selectedLevel = parsed;
+        }
+    }
+
+    private string BuildUrl(AuthFederationMethod method)
+    {
+        var separator = LoginPath.Contains('?', StringComparison.Ordinal) ? '&' : '?';
+        var url = string.Concat(
+            LoginPath,
+            separator,
+            "loa=", Uri.EscapeDataString(SelectedLevel.ToString().ToLowerInvariant()),
+            "&method=", Uri.EscapeDataString(method.Id));
+
+        return string.IsNullOrWhiteSpace(ReturnUrl)
+            ? url
+            : string.Concat(url, "&returnUrl=", Uri.EscapeDataString(ReturnUrl));
+    }
+
+    private Task NavigateAsync(string url) => OnNavigate.InvokeAsync(url);
+}

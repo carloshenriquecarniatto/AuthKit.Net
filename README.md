@@ -1,0 +1,143 @@
+# AuthKit for .NET
+
+**English** · [Português](README.pt-BR.md) · [Español](README.es.md)
+
+Authentication screens that are ready in one line, native to .NET.
+
+This repository ships the .NET SDK only. The other platforms live in their own repositories, with
+the same base name and their own release cycle:
+
+| Platform | Repository                                                                               |
+| -------- | ---------------------------------------------------------------------------------------- |
+| Angular  | [AuthKit.Angular](https://github.com/carloshenriquecarniatto/AuthKit.Angular)            |
+| Aurelia  | [AuthKit.Aurelia](https://github.com/carloshenriquecarniatto/AuthKit.Aurelia)            |
+| Contract | [`@authkit/contracts`](https://www.npmjs.com/package/@authkit/contracts), published here |
+
+```text
+AuthKit.Core               contracts, models, state machine, validation, theming   (no third-party dependencies)
+AuthKit.Supabase           Supabase Auth provider
+AuthKit.Blazor             native Blazor components (WebAssembly, Server, Auto)
+AuthKit.Clave              Cl@ve / eIDAS federation: request, validation, identity
+AuthKit.Clave.AspNetCore   MapClave(): metadata, login and ACS endpoints
+contracts/                 @authkit/contracts, the normative contract consumed by the TypeScript SDKs
+```
+
+## Customizing the UI
+
+There are three levels, and the [customization guide](docs/customization.md) explains each one with
+code: theme tokens, `ak-*` CSS classes, and a headless provider.
+
+## Why
+
+- **Native rendering.** Razor components for Blazor. No React inside a webview, no JS interop beyond
+  `sessionStorage`.
+- **Provider-agnostic.** `IAuthProvider` is the only dependency the UI has.
+- **Federation is a library, not a service.** `AuthKit.Clave` runs inside the host, validates the
+  assertion and stops at "here is a validated identity". It never signs anyone in.
+- **Security is part of the contract.** Server-side tokens never reach the browser, service-role
+  keys are rejected at startup, provider error text never reaches the UI, and a pentest suite blocks
+  every release.
+- **One contract.** `contracts/authkit.contract.json` is normative for every SDK; a parity test in
+  each repository fails the build if it drifts.
+
+## Quick start — Blazor with Supabase
+
+```bash
+dotnet add package AuthKit.Supabase
+dotnet add package AuthKit.Blazor
+```
+
+```csharp
+builder.Services.AddAuthKitSupabase(options =>
+{
+    options.Url = builder.Configuration["Supabase:Url"]!;
+    options.AnonKey = builder.Configuration["Supabase:AnonKey"]!;
+});
+
+builder.Services.AddAuthKitBlazor(AuthSessionStorageMode.BrowserSession);
+```
+
+```razor
+<AuthKitEmail OnSignInComplete="GoHome" />
+<AuthKitSocials Providers="@(new[] { "github", "google" })" />
+```
+
+## Quick start — Cl@ve
+
+```csharp
+builder.Services.AddClave(
+    clave =>
+    {
+        clave.Environment = ClaveEnvironment.Preproduction;
+        clave.EntityId = "https://sede.example.es/clave/metadata";
+        clave.AcsUrl = "https://sede.example.es/clave/acs";
+        clave.SigningCertificate = certificates.Current("caib");
+        clave.PasarelaSigningCertificate = trust.Anchors.Clave;
+        clave.Tenant = "caib";
+        clave.SubjectKey = secrets.SubjectKey;
+    },
+    http => http.RoutePrefix = "/clave");
+
+app.MapClave(async (context, identity) =>
+{
+    await context.SignInAsync(identity.ToClaimsPrincipal("clientes/clave"));
+    return Results.Redirect(identity.ReturnUrl ?? "/");
+});
+```
+
+The full guide — CAID checklist, two environments, distributed state and the claims table — is in
+[`docs/clave.md`](docs/clave.md).
+
+## Contract package
+
+`@authkit/contracts` is published from this repository during a release. The Angular and Aurelia
+repositories consume it by version, so the contract has one owner and three consumers:
+
+```bash
+cd contracts && npm test     # field, enum and operation parity with authkit.contract.json
+```
+
+## Penetration test
+
+The offline suite runs on every pull request; the live one needs Docker.
+
+```bash
+dotnet test security/AuthKit.Pentest/AuthKit.Pentest.csproj
+bash scripts/pentest-up.sh && bash scripts/pentest-live.sh
+```
+
+## Status
+
+| Area                       | State                                                                   |
+| -------------------------- | ----------------------------------------------------------------------- |
+| Contract (`1.1.0`)         | Stable (additive over 1.0.0)                                            |
+| `AuthKit.Core`             | Email, magic link, OTP (email + phone), recovery, OAuth, capabilities   |
+| `AuthKit.Supabase`         | Complete provider, error mapping, session restore                       |
+| `AuthKit.Blazor`           | Email, magic link, reset, socials, callback, Cl@ve methods and callback |
+| `AuthKit.Clave`            | eIDAS request/response, pinned certificate, replay, LoA, identity       |
+| `AuthKit.Clave.AspNetCore` | `MapClave()` metadata/login/ACS, distributed state, return-URL policy   |
+| MAUI                       | Planned: same core, XAML shell, `WebAuthenticator`                      |
+
+## Repository layout
+
+```text
+contracts/            @authkit/contracts: authkit.contract.json + TypeScript declarations
+src/dotnet/           AuthKit.Core, AuthKit.Supabase, AuthKit.Blazor, AuthKit.Clave*
+tests/dotnet/         xUnit, bUnit and protocol fixtures
+security/             offline and live pentest suites
+samples/messages/     committed, anonymised protocol fixtures
+docs/                 spec, threat model, architecture, Cl@ve guide, UI parity
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Hooks run `dotnet test` before a push; a contract change
+must land here first, then in the consuming SDKs with a version bump.
+
+## Security
+
+Read [SECURITY.md](SECURITY.md) before reporting a vulnerability.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

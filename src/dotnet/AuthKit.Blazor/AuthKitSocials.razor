@@ -1,0 +1,146 @@
+@inherits AuthKitComponentBase
+
+<AuthKitStyle IncludeStyles="IncludeStyles" />
+
+<div class="ak-form" style="@ThemeVars">
+    @if (Logo is not null)
+    {
+        <img class="ak-logo" src="@Logo" alt="" />
+    }
+
+    @if (Error is not null)
+    {
+        <div class="ak-error" role="alert">@Error.Message</div>
+    }
+
+    <div class="ak-socials @(Variant == SocialButtonVariant.Icon ? "" : "ak-inline")">
+        @foreach (var provider in EffectiveProviders)
+        {
+            <button class="ak-social" type="button"
+                    style="@(Colored ? $"background:{BrandColor(provider)};color:{BrandTextColor(provider)}" : null)"
+                    disabled="@Busy"
+                    @onclick="() => StartAsync(provider)">
+                @if (Busy)
+                {
+                    <span class="ak-spinner"></span>
+                }
+                else
+                {
+                    <span aria-hidden="true">@Initial(provider)</span>
+                }
+                @if (Variant == SocialButtonVariant.IconAndText)
+                {
+                    <span>@Text(AuthMessageKey.ContinueWithProvider, DisplayName(provider))</span>
+                }
+                else
+                {
+                    <span class="ak-visually-hidden">@DisplayName(provider)</span>
+                }
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>How social buttons are rendered, mirroring supabase_auth_ui.</summary>
+    public enum SocialButtonVariant
+    {
+        /// <summary>Icon only.</summary>
+        Icon,
+
+        /// <summary>Icon and "Continue with …" text.</summary>
+        IconAndText
+    }
+
+    private static readonly Dictionary<string, string> BrandColors = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["google"] = "#ffffff",
+        ["github"] = "#24292f",
+        ["apple"] = "#000000",
+        ["azure"] = "#0078d4",
+        ["facebook"] = "#1877f2",
+        ["discord"] = "#5865f2",
+        ["gitlab"] = "#fc6d26",
+        ["linkedin"] = "#0a66c2",
+        ["slack"] = "#4a154b",
+        ["spotify"] = "#1db954",
+        ["twitch"] = "#9146ff",
+        ["twitter"] = "#000000",
+        ["x"] = "#000000",
+        ["zoom"] = "#0b5cff"
+    };
+
+    private static readonly HashSet<string> LightBrands = new(StringComparer.OrdinalIgnoreCase) { "google" };
+
+    /// <summary>Providers to render. Defaults to <see cref="AuthKitOptions.SocialProviders"/>.</summary>
+    [Parameter]
+    public IReadOnlyList<string>? Providers { get; set; }
+
+    /// <summary>Use provider brand colours.</summary>
+    [Parameter]
+    public bool Colored { get; set; } = true;
+
+    /// <summary>Button layout.</summary>
+    [Parameter]
+    public SocialButtonVariant Variant { get; set; } = SocialButtonVariant.IconAndText;
+
+    /// <summary>Overrides <see cref="AuthKitOptions.RedirectTo"/> for this flow.</summary>
+    [Parameter]
+    public string? RedirectTo { get; set; }
+
+    /// <summary>
+    /// Receives the authorization URL instead of navigating. Use this when the host owns
+    /// navigation (for example a modal or a native in-app browser).
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnOAuthRequested { get; set; }
+
+    private IReadOnlyList<string> EffectiveProviders =>
+        Providers ?? Options.SocialProviders;
+
+    private static string Initial(string provider) =>
+        provider.Length == 0 ? "?" : provider[..1].ToUpperInvariant();
+
+    private static string DisplayName(string provider)
+    {
+        var cleaned = provider.Replace("custom:", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("_oidc", string.Empty, StringComparison.OrdinalIgnoreCase);
+
+        return cleaned.Length == 0
+            ? provider
+            : char.ToUpperInvariant(cleaned[0]) + cleaned[1..];
+    }
+
+    private static string BrandColor(string provider) =>
+        BrandColors.TryGetValue(provider, out var color) ? color : "transparent";
+
+    private static string BrandTextColor(string provider) =>
+        LightBrands.Contains(provider) ? "#111827" : "#ffffff";
+
+    private async Task StartAsync(string provider)
+    {
+        try
+        {
+            var url = await Provider.BeginOAuthAsync(provider, RedirectTo ?? Options.RedirectTo);
+
+            if (OnOAuthRequested.HasDelegate)
+            {
+                await OnOAuthRequested.InvokeAsync(url);
+                return;
+            }
+
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        catch (Exception exception)
+        {
+            var error = AuthError.From(AuthErrorCode.Unknown, Text(AuthMessageKey.UnexpectedError));
+            Flow.SetState(AuthState.Error);
+            if (OnError.HasDelegate)
+            {
+                await OnError.InvokeAsync(error);
+            }
+
+            _ = exception;
+        }
+    }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@authkit/contracts",
+  "version": "0.1.0",
+  "description": "The normative AuthKit contract: types, runtime helpers and authkit.contract.json, shared by every SDK.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carloshenriquecarniatto/AuthKit.Net.git",
+    "directory": "contracts"
+  },
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./testing": {
+      "types": "./testing.d.ts",
+      "default": "./testing.js"
+    },
+    "./authkit.contract.json": "./authkit.contract.json"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "testing.js",
+    "testing.d.ts",
+    "authkit.contract.json",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "authkit",
+    "contract",
+    "types"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

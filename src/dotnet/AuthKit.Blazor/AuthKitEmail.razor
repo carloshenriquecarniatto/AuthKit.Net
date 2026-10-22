@@ -1,0 +1,325 @@
+@inherits AuthKitComponentBase
+
+<AuthKitStyle IncludeStyles="IncludeStyles" />
+
+<div class="ak-form" style="@ThemeVars">
+    @if (Logo is not null)
+    {
+        <img class="ak-logo" src="@Logo" alt="" />
+    }
+
+    @if (Error is not null)
+    {
+        <div class="ak-error" role="alert">@Error.Message</div>
+    }
+
+    @if (_mode == EmailMode.Recover)
+    {
+        <form @onsubmit="SendResetAsync" @onsubmit:preventDefault>
+            <div class="ak-field">
+                <label class="ak-label" for="ak-recover-email">@Text(AuthMessageKey.Email)</label>
+                <input id="ak-recover-email" class="ak-input" type="email" autocomplete="email"
+                       @bind="_email" @bind:event="oninput" />
+            </div>
+
+            @if (_notice is not null)
+            {
+                <div class="ak-notice" role="status">@_notice</div>
+            }
+
+            <button class="ak-button" type="submit" disabled="@Busy">
+                @if (Busy)
+                {
+                    <span class="ak-spinner"></span>
+                }
+                @Text(AuthMessageKey.SendResetEmail)
+            </button>
+        </form>
+
+        <button class="ak-link" type="button" @onclick="() => _mode = EmailMode.SignIn">
+            @Text(AuthMessageKey.BackToSignIn)
+        </button>
+    }
+    else
+    {
+        <form @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+            <div class="ak-field">
+                <label class="ak-label" for="ak-email">@Text(AuthMessageKey.Email)</label>
+                <input id="ak-email" class="ak-input" type="email" autocomplete="email"
+                       aria-invalid="@(_emailError is not null)"
+                       @bind="_email" @bind:event="oninput" />
+                @if (_emailError is not null)
+                {
+                    <span class="ak-hint">@_emailError</span>
+                }
+            </div>
+
+            <div class="ak-field">
+                <label class="ak-label" for="ak-password">@Text(AuthMessageKey.Password)</label>
+                <input id="ak-password" class="ak-input" type="@(_showPassword ? "text" : "password")"
+                       autocomplete="@(_mode == EmailMode.SignUp ? "new-password" : "current-password")"
+                       aria-invalid="@(_passwordError is not null)"
+                       @bind="_password" @bind:event="oninput" />
+                <button class="ak-link" type="button" @onclick="() => _showPassword = !_showPassword">
+                    @Text(_showPassword ? AuthMessageKey.HidePassword : AuthMessageKey.ShowPassword)
+                </button>
+                @if (_passwordError is not null)
+                {
+                    <span class="ak-hint">@_passwordError</span>
+                }
+            </div>
+
+            @if (ShowConfirmPasswordField && _mode == EmailMode.SignUp)
+            {
+                <div class="ak-field">
+                    <label class="ak-label" for="ak-confirm">@Text(AuthMessageKey.ConfirmPassword)</label>
+                    <input id="ak-confirm" class="ak-input" type="@(_showPassword ? "text" : "password")"
+                           autocomplete="new-password" aria-invalid="@(_confirmError is not null)"
+                           @bind="_confirmPassword" @bind:event="oninput" />
+                    @if (_confirmError is not null)
+                    {
+                        <span class="ak-hint">@_confirmError</span>
+                    }
+                </div>
+            }
+
+            @if (_mode == EmailMode.SignUp && MetadataFields.Count > 0)
+            {
+                @foreach (var field in MetadataFields)
+                {
+                    @if (field.Kind == AuthMetadataFieldKind.Boolean)
+                    {
+                        <label class="ak-checkbox" for="@($"ak-meta-{field.Key}")">
+                            <input id="@($"ak-meta-{field.Key}")" type="checkbox"
+                                   checked="@BooleanValue(field)"
+                                   @onchange="args => SetBoolean(field, (bool)(args.Value ?? false))" />
+                            @field.Label
+                        </label>
+                    }
+                    else
+                    {
+                        <div class="ak-field">
+                            <label class="ak-label" for="@($"ak-meta-{field.Key}")">@field.Label</label>
+                            <input id="@($"ak-meta-{field.Key}")" class="ak-input" type="text"
+                                   placeholder="@field.Placeholder"
+                                   value="@TextValue(field)"
+                                   @oninput="args => SetText(field, args.Value?.ToString())" />
+                        </div>
+                    }
+                }
+            }
+
+            <button class="ak-button" type="submit" disabled="@Busy">
+                @if (Busy)
+                {
+                    <span class="ak-spinner"></span>
+                }
+                @(_mode == EmailMode.SignUp ? Text(AuthMessageKey.SignUp) : Text(AuthMessageKey.SignIn))
+            </button>
+
+            @if (_mode == EmailMode.SignIn)
+            {
+                <button class="ak-link" type="button" @onclick="() => { _mode = EmailMode.Recover; _notice = null; }">
+                    @Text(AuthMessageKey.ForgotPassword)
+                </button>
+            }
+
+            @if (Capabilities.SignUp)
+            {
+                <button class="ak-link" type="button" @onclick="ToggleMode">
+                    @(_mode == EmailMode.SignUp ? Text(AuthMessageKey.HaveAccount) : Text(AuthMessageKey.DontHaveAccount))
+                </button>
+            }
+        </form>
+    }
+</div>
+
+@code {
+    private enum EmailMode
+    {
+        SignIn,
+        SignUp,
+        Recover
+    }
+
+    private EmailMode _mode = EmailMode.SignIn;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private string? _emailError;
+    private string? _passwordError;
+    private string? _confirmError;
+    private string? _notice;
+    private bool _showPassword;
+
+    private readonly Dictionary<string, string> _textMetadata = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, bool> _booleanMetadata = new(StringComparer.Ordinal);
+
+    /// <summary>Receives the session after a successful sign-in.</summary>
+    [Parameter]
+    public EventCallback<AuthSession> OnSignInComplete { get; set; }
+
+    /// <summary>Receives the result of a sign-up (which may require confirmation).</summary>
+    [Parameter]
+    public EventCallback<AuthResult> OnSignUpComplete { get; set; }
+
+    /// <summary>Raised after a recovery email is sent.</summary>
+    [Parameter]
+    public EventCallback OnPasswordResetSent { get; set; }
+
+    /// <summary>Overrides <see cref="AuthKitOptions.RedirectTo"/> for this form.</summary>
+    [Parameter]
+    public string? RedirectTo { get; set; }
+
+    /// <summary>Shows a second password field on sign-up, as in supabase_auth_ui.</summary>
+    [Parameter]
+    public bool ShowConfirmPasswordField { get; set; }
+
+    /// <summary>Extra sign-up fields mapped to user metadata.</summary>
+    [Parameter]
+    public IReadOnlyList<AuthMetadataField> MetadataFields { get; set; } = [];
+
+    /// <summary>Prefills the email field.</summary>
+    [Parameter]
+    public string? PrefilledEmail { get; set; }
+
+    /// <summary>Prefills the password field.</summary>
+    [Parameter]
+    public string? PrefilledPassword { get; set; }
+
+    private AuthCapabilities Capabilities => Provider.Capabilities;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _email = PrefilledEmail ?? string.Empty;
+        _password = PrefilledPassword ?? string.Empty;
+    }
+
+    private void ToggleMode()
+    {
+        _mode = _mode == EmailMode.SignUp ? EmailMode.SignIn : EmailMode.SignUp;
+        _notice = null;
+        _emailError = null;
+        _passwordError = null;
+        _confirmError = null;
+    }
+
+    private string? TextValue(AuthMetadataField field) =>
+        _textMetadata.TryGetValue(field.Key, out var value) ? value : null;
+
+    private void SetText(AuthMetadataField field, string? value) =>
+        _textMetadata[field.Key] = value ?? string.Empty;
+
+    private bool BooleanValue(AuthMetadataField field) =>
+        _booleanMetadata.TryGetValue(field.Key, out var value) && value;
+
+    private void SetBoolean(AuthMetadataField field, bool value) =>
+        _booleanMetadata[field.Key] = value;
+
+    private bool Validate()
+    {
+        _emailError = AuthValidation.IsValidEmail(_email) ? null : Text(AuthMessageKey.InvalidEmail);
+
+        if (_mode == EmailMode.SignUp)
+        {
+            _passwordError = AuthValidation.IsValidPassword(_password, Options.MinimumPasswordLength)
+                ? null
+                : Text(AuthMessageKey.PasswordTooShort).Replace("{min}", Options.MinimumPasswordLength.ToString(), StringComparison.Ordinal);
+
+            _confirmError = ShowConfirmPasswordField && !AuthValidation.PasswordsMatch(_password, _confirmPassword)
+                ? Text(AuthMessageKey.PasswordMismatch)
+                : null;
+        }
+        else
+        {
+            _passwordError = string.IsNullOrEmpty(_password) ? Text(AuthMessageKey.RequiredField) : null;
+            _confirmError = null;
+        }
+
+        var requiredMetadataMissing = MetadataFields.Any(field =>
+            field.Required &&
+            field.Kind == AuthMetadataFieldKind.Text &&
+            string.IsNullOrWhiteSpace(TextValue(field) ?? string.Empty));
+
+        return _emailError is null && _passwordError is null && _confirmError is null && !requiredMetadataMissing;
+    }
+
+    private async Task SubmitAsync()
+    {
+        _notice = null;
+
+        if (!Validate())
+        {
+            return;
+        }
+
+        if (_mode == EmailMode.SignUp)
+        {
+            var metadata = BuildMetadata();
+            var result = await ExecuteAsync(token => Provider.SignUpWithPasswordAsync(_email, _password, metadata, token));
+
+            if (result.Ok)
+            {
+                if (result.Session is not null)
+                {
+                    await OnSignInComplete.InvokeAsync(result.Session);
+                }
+
+                await OnSignUpComplete.InvokeAsync(result);
+            }
+
+            return;
+        }
+
+        var signIn = await ExecuteAsync(token => Provider.SignInWithPasswordAsync(_email, _password, token));
+        if (signIn.Ok && signIn.Session is not null)
+        {
+            await OnSignInComplete.InvokeAsync(signIn.Session);
+        }
+    }
+
+    private async Task SendResetAsync()
+    {
+        _notice = null;
+        _emailError = AuthValidation.IsValidEmail(_email) ? null : Text(AuthMessageKey.InvalidEmail);
+
+        if (_emailError is not null)
+        {
+            return;
+        }
+
+        var result = await ExecuteAsync(token =>
+            Provider.SendPasswordResetAsync(_email, RedirectTo ?? Options.RedirectTo, token));
+
+        if (result.Ok)
+        {
+            _notice = Text(AuthMessageKey.ResetEmailSent);
+            await OnPasswordResetSent.InvokeAsync();
+        }
+    }
+
+    private Dictionary<string, string>? BuildMetadata()
+    {
+        if (MetadataFields.Count == 0)
+        {
+            return null;
+        }
+
+        var metadata = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var field in MetadataFields)
+        {
+            if (field.Kind == AuthMetadataFieldKind.Boolean)
+            {
+                metadata[field.Key] = BooleanValue(field) ? "true" : "false";
+            }
+            else if (TextValue(field) is { Length: > 0 } text)
+            {
+                metadata[field.Key] = text;
+            }
+        }
+
+        return metadata;
+    }
+}

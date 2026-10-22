@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in AuthKit does not behave as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities here. Follow SECURITY.md instead.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - AuthKit.Core
+        - AuthKit.Supabase
+        - AuthKit.Blazor
+        - '@authkit/angular'
+    validations:
+      required: true
+  - type: dropdown
+    id: host
+    attributes:
+      label: Hosting model
+      options:
+        - Blazor WebAssembly
+        - Blazor Server
+        - Blazor Web App (Auto)
+        - Angular
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: A failing test is the fastest path to a fix.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+    validations:
+      required: true

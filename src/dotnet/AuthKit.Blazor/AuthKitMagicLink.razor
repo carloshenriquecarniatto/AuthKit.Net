@@ -1,0 +1,94 @@
+@inherits AuthKitComponentBase
+
+<AuthKitStyle IncludeStyles="IncludeStyles" />
+
+<div class="ak-form" style="@ThemeVars">
+    @if (Logo is not null)
+    {
+        <img class="ak-logo" src="@Logo" alt="" />
+    }
+
+    @if (Error is not null)
+    {
+        <div class="ak-error" role="alert">@Error.Message</div>
+    }
+
+    @if (_sent)
+    {
+        <div class="ak-notice" role="status">@Text(AuthMessageKey.CheckYourEmail)</div>
+        <button class="ak-link" type="button" @onclick="Reset">
+            @Text(AuthMessageKey.BackToSignIn)
+        </button>
+    }
+    else
+    {
+        <form @onsubmit="SendAsync" @onsubmit:preventDefault>
+            <div class="ak-field">
+                <label class="ak-label" for="ak-magic-email">@Text(AuthMessageKey.Email)</label>
+                <input id="ak-magic-email" class="ak-input" type="email" autocomplete="email"
+                       aria-invalid="@(_emailError is not null)"
+                       @bind="_email" @bind:event="oninput" />
+                @if (_emailError is not null)
+                {
+                    <span class="ak-hint">@_emailError</span>
+                }
+            </div>
+
+            <button class="ak-button" type="submit" disabled="@Busy">
+                @if (Busy)
+                {
+                    <span class="ak-spinner"></span>
+                }
+                @Text(AuthMessageKey.MagicLink)
+            </button>
+        </form>
+    }
+</div>
+
+@code {
+    private string _email = string.Empty;
+    private string? _emailError;
+    private bool _sent;
+
+    /// <summary>Raised after the link is sent.</summary>
+    [Parameter]
+    public EventCallback OnSent { get; set; }
+
+    /// <summary>Overrides <see cref="AuthKitOptions.RedirectTo"/> for this form.</summary>
+    [Parameter]
+    public string? RedirectTo { get; set; }
+
+    /// <summary>Prefills the email field.</summary>
+    [Parameter]
+    public string? PrefilledEmail { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _email = PrefilledEmail ?? string.Empty;
+    }
+
+    private void Reset()
+    {
+        _sent = false;
+        Flow.SetState(AuthState.Idle, clearError: true);
+    }
+
+    private async Task SendAsync()
+    {
+        _emailError = AuthValidation.IsValidEmail(_email) ? null : Text(AuthMessageKey.InvalidEmail);
+        if (_emailError is not null)
+        {
+            return;
+        }
+
+        var result = await ExecuteAsync(token =>
+            Provider.SendMagicLinkAsync(_email, RedirectTo ?? Options.RedirectTo, token));
+
+        if (result.Ok)
+        {
+            _sent = true;
+            await OnSent.InvokeAsync();
+        }
+    }
+}

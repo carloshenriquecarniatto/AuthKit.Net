@@ -1,0 +1,16 @@
+<header class="site-header" role="banner">
+  <div class="wrapper site-header__inner">
+    <a class="site-title" rel="author" href="{{ '/' | relative_url }}">AuthKit</a>
+    {% assign alts = page.alt_lang | default: site.alt_lang %} {% assign here = page.url %} {%
+    assign en_current = '' %} {% assign pt_current = '' %} {% assign es_current = '' %} {% if here
+    == alts.en %}{% assign en_current = ' aria-current="page"' %}{% endif %} {% if here == alts.pt
+    %}{% assign pt_current = ' aria-current="page"' %}{% endif %} {% if here == alts.es %}{% assign
+    es_current = ' aria-current="page"' %}{% endif %}
+    <nav class="site-nav">
+      <a href="{{ alts.en | relative_url }}" {{ en_current }}>EN</a>
+      <a href="{{ alts.pt | relative_url }}" {{ pt_current }}>PT</a>
+      <a href="{{ alts.es | relative_url }}" {{ es_current }}>ES</a>
+      <a href="https://github.com/carloshenriquecarniatto/AuthKit">GitHub</a>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,32 @@
+# AuthKit
+
+> Provider-agnostic authentication UI for .NET, with Supabase and Cl@ve as providers.
+> One contract, two SDKs: contracts/authkit.contract.json is normative and a parity test in each
+> language fails the build if either side drifts.
+
+## Guides
+
+- [Customizing the UI (English)](https://carloshenriquecarniatto.github.io/AuthKit/customization/): three levels — theme tokens, ak-* CSS classes, headless provider.
+- [Personalizando a interface (Português)](https://carloshenriquecarniatto.github.io/AuthKit/personalizacao/)
+- [Personalizar la interfaz (Español)](https://carloshenriquecarniatto.github.io/AuthKit/personalizacion/)
+
+## Markdown sources (canonical, no rendering)
+
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/README.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/README.pt-BR.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/README.es.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/customization.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/spec.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/clave.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/architecture.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/threat-model.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/pentest.md
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/ui-parity.md
+
+## Machine-readable contract
+
+- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/contracts/authkit.contract.json
+
+## Source
+
+- https://github.com/carloshenriquecarniatto/AuthKit

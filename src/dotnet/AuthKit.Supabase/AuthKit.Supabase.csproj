@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>AuthKit.Supabase</PackageId>
+    <Description>Supabase Auth provider for AuthKit (email, magic link, OTP, OAuth and password recovery).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Supabase" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../AuthKit.Core/AuthKit.Core.csproj" />
+  </ItemGroup>
+
+</Project>

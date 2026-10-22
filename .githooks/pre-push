@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Runs the fast test suites. CI runs the full matrix and the security scanners.
+set -euo pipefail
+
+[ "${AUTHKIT_SKIP_HOOKS:-0}" = "1" ] && exit 0
+
+echo "pre-push: building and testing .NET..."
+dotnet test --nologo -v q --filter "Category!=Slow" >/dev/null
+
+if command -v node >/dev/null 2>&1; then
+  echo "pre-push: checking the contract package..."
+  node --test contracts/test/*.test.mjs >/dev/null
+fi
+
+echo "pre-push: ok."

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.angular/
+out-tsc/
+bin/
+obj/
+artifacts/
+CHANGELOG.md
+package-lock.json
+*.min.*
+docs/_site/
+docs/.jekyll-cache/

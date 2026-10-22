@@ -1,0 +1,133 @@
+@namespace AuthKit.Blazor
+@inject NavigationManager Navigation
+
+@*
+    Reads the outcome the host put in the redirect and raises it. It performs no network call,
+    no token exchange and no navigation: success is inferred from the host's own session, which
+    exists by the time this component runs. See docs/spec-clave.md §6.
+*@
+
+@code {
+    /// <summary>
+    /// Callback URL to inspect. When null, the current browser URL is used.
+    /// </summary>
+    [Parameter]
+    public string? CallbackUrl { get; set; }
+
+    /// <summary>
+    /// When true, replaces the browser history entry with the cleaned URL. Off by default because
+    /// navigation belongs to the host.
+    /// </summary>
+    [Parameter]
+    public bool ReplaceHistoryEntry { get; set; }
+
+    /// <summary>Raised once per callback URL with the parsed outcome.</summary>
+    [Parameter]
+    public EventCallback<AuthKitFederationOutcome> OnCompleted { get; set; }
+
+    private string? lastInspected;
+
+    /// <inheritdoc />
+    protected override async Task OnParametersSetAsync()
+    {
+        var url = CallbackUrl ?? Navigation.Uri;
+        if (string.Equals(url, lastInspected, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        lastInspected = url;
+        var outcome = Inspect(url);
+
+        if (ReplaceHistoryEntry && !string.Equals(outcome.CleanUrl, url, StringComparison.Ordinal))
+        {
+            Navigation.NavigateTo(outcome.CleanUrl, replace: true);
+        }
+
+        if (OnCompleted.HasDelegate)
+        {
+            await OnCompleted.InvokeAsync(outcome);
+        }
+    }
+
+    /// <summary>Parses a callback URL without touching the browser.</summary>
+    /// <param name="url">Absolute or relative callback URL.</param>
+    /// <returns>The outcome.</returns>
+    public static AuthKitFederationOutcome Inspect(string url)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(url);
+
+        var (path, query) = Split(url);
+        var values = ParseQuery(query);
+        var cleanUrl = values.Count == 0 ? url : path + RebuildQuery(values, removeFederationKeys: true);
+
+        if (!values.TryGetValue("error", out var errorValue) || string.IsNullOrWhiteSpace(errorValue))
+        {
+            values.TryGetValue("returnUrl", out var returnUrl);
+            return new AuthKitFederationOutcome
+            {
+                Ok = true,
+                CleanUrl = cleanUrl,
+                ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? null : returnUrl
+            };
+        }
+
+        var code = MapCode(errorValue);
+        return new AuthKitFederationOutcome
+        {
+            Ok = false,
+            Error = AuthError.From(code, AuthErrorMessageDefaults.For(code)),
+            CleanUrl = cleanUrl
+        };
+    }
+
+    private static AuthErrorCode MapCode(string value)
+    {
+        foreach (var pair in AuthContractValues.ErrorCodes)
+        {
+            if (string.Equals(pair.Value, value, StringComparison.Ordinal))
+            {
+                return pair.Key;
+            }
+        }
+
+        return AuthErrorCode.Unknown;
+    }
+
+    private static (string Path, string Query) Split(string url)
+    {
+        var hash = url.IndexOf('#', StringComparison.Ordinal);
+        var withoutFragment = hash >= 0 ? url[..hash] : url;
+        var question = withoutFragment.IndexOf('?', StringComparison.Ordinal);
+        return question < 0
+            ? (withoutFragment, string.Empty)
+            : (withoutFragment[..question], withoutFragment[(question + 1)..]);
+    }
+
+    private static Dictionary<string, string> ParseQuery(string query)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var separator = pair.IndexOf('=', StringComparison.Ordinal);
+            var key = Uri.UnescapeDataString(separator < 0 ? pair : pair[..separator]);
+            var value = separator < 0 ? string.Empty : Uri.UnescapeDataString(pair[(separator + 1)..].Replace("+", " ", StringComparison.Ordinal));
+            values[key] = value;
+        }
+
+        return values;
+    }
+
+    private static string RebuildQuery(Dictionary<string, string> values, bool removeFederationKeys)
+    {
+        var kept = values
+            .Where(pair => !removeFederationKeys || !IsFederationKey(pair.Key))
+            .Select(pair => string.Concat(Uri.EscapeDataString(pair.Key), "=", Uri.EscapeDataString(pair.Value)))
+            .ToArray();
+
+        return kept.Length == 0 ? string.Empty : "?" + string.Join('&', kept);
+    }
+
+    private static bool IsFederationKey(string key) =>
+        key is "error" or "error_reason" or "SAMLResponse" or "RelayState";
+}

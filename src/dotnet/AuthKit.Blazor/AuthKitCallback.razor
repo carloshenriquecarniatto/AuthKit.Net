@@ -1,0 +1,78 @@
+@inherits AuthKitComponentBase
+
+<AuthKitStyle IncludeStyles="IncludeStyles" />
+
+<div class="ak-form" style="@ThemeVars">
+    @if (Error is not null)
+    {
+        <div class="ak-error" role="alert">@Error.Message</div>
+    }
+    else if (!_completed)
+    {
+        <div class="ak-notice" role="status" aria-live="polite">
+            <span class="ak-spinner"></span>
+            @Text(AuthMessageKey.SigningIn)
+        </div>
+    }
+</div>
+
+@code {
+    private bool _started;
+    private bool _completed;
+
+    /// <summary>Receives the session established by the callback.</summary>
+    [Parameter]
+    public EventCallback<AuthSession> OnCompleted { get; set; }
+
+    /// <summary>
+    /// Optional URL to replace the current one after success. Use it to strip tokens and the
+    /// authorization code from the address bar and from browser history.
+    /// </summary>
+    [Parameter]
+    public string? RedirectTo { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+        {
+            return;
+        }
+
+        _started = true;
+        await CompleteAsync();
+    }
+
+    private static bool LooksLikeCallback(string url) =>
+        url.Contains("code=", StringComparison.OrdinalIgnoreCase) ||
+        url.Contains("access_token=", StringComparison.OrdinalIgnoreCase) ||
+        url.Contains("error=", StringComparison.OrdinalIgnoreCase);
+
+    private async Task CompleteAsync()
+    {
+        var url = Navigation.Uri;
+        if (!LooksLikeCallback(url))
+        {
+            Flow.SetState(AuthState.Idle);
+            return;
+        }
+
+        var result = await ExecuteAsync(token => Provider.CompleteOAuthAsync(url, token));
+
+        if (result.Ok)
+        {
+            _completed = true;
+
+            if (result.Session is not null)
+            {
+                await OnCompleted.InvokeAsync(result.Session);
+            }
+
+            if (!string.IsNullOrWhiteSpace(RedirectTo))
+            {
+                Navigation.NavigateTo(RedirectTo, replace: true);
+            }
+        }
+        // On failure the URL is left untouched on purpose: authorization codes are single use,
+        // and navigating away would hide the error the user needs to read.
+    }
+}

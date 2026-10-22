@@ -1,0 +1,10 @@
+<Project>
+  <!-- Pentest projects share the SDK settings of the libraries. -->
+  <Import Project="../src/dotnet/Directory.Build.props" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);CA1707;CA1861;CA2007;CA5394</NoWarn>
+  </PropertyGroup>
+</Project>
