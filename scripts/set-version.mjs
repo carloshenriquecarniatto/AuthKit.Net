@@ -30,14 +30,9 @@ writeFileSync(
 `,
 );
 
-const contractsPackagePath = join(root, 'contracts', 'package.json');
-const contractsPackage = JSON.parse(readFileSync(contractsPackagePath, 'utf8'));
-contractsPackage.version = version;
-writeFileSync(contractsPackagePath, `${JSON.stringify(contractsPackage, null, 2)}\n`);
-
 const rootPackagePath = join(root, 'package.json');
 const rootPackage = JSON.parse(readFileSync(rootPackagePath, 'utf8'));
 rootPackage.version = version;
 writeFileSync(rootPackagePath, `${JSON.stringify(rootPackage, null, 2)}\n`);
 
-console.log(`set-version: wrote ${version} to .NET, @authkit/contracts and root manifests.`);
+console.log(`set-version: wrote ${version} to the .NET manifests.`);

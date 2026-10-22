@@ -2,7 +2,7 @@
  * Semantic Release configuration.
  *
  * One lockstep version for every artifact of this repository. scripts/set-version.mjs stamps the
- * version into src/dotnet/version.props and the @authkit/contracts manifest during prepare.
+ * version into src/dotnet/version.props during prepare.
  *
  * main is a protected branch, so the release job never commits back: it creates the tag and the
  * GitHub release, and the artifacts carry the version. Local sources keep the development

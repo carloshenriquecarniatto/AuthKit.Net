@@ -41,8 +41,8 @@ silently put a refresh token in a browser on Server.
 ## Angular and Aurelia
 
 Those SDKs live in their own repositories (`AuthKit.Angular`, `AuthKit.Aurelia`) and consume the
-same contract through `@authkit/contracts`. The diagram above still describes the shape; only the
-repository boundary is new.
+same contract through a committed copy of `contracts/authkit.contract.json`, checked by CI. The
+diagram above still describes the shape; only the repository boundary is new.
 
 ## Error handling
 

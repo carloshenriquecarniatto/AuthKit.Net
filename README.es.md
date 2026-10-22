@@ -7,11 +7,11 @@ Pantallas de autenticación listas en una línea, nativas para .NET.
 Este repositorio contiene solo el SDK .NET. Las otras plataformas viven en repositorios propios, con
 el mismo nombre base y ciclos de release independientes:
 
-| Plataforma | Repositorio                                                                              |
-| ---------- | ---------------------------------------------------------------------------------------- |
-| Angular    | [AuthKit.Angular](https://github.com/carloshenriquecarniatto/AuthKit.Angular)            |
-| Aurelia    | [AuthKit.Aurelia](https://github.com/carloshenriquecarniatto/AuthKit.Aurelia)            |
-| Contrato   | [`@authkit/contracts`](https://www.npmjs.com/package/@authkit/contracts), publicado aquí |
+| Plataforma | Repositorio                                                                   |
+| ---------- | ----------------------------------------------------------------------------- |
+| Angular    | [AuthKit.Angular](https://github.com/carloshenriquecarniatto/AuthKit.Angular) |
+| Aurelia    | [AuthKit.Aurelia](https://github.com/carloshenriquecarniatto/AuthKit.Aurelia) |
+| Contrato   | `contracts/authkit.contract.json`, mantenido aqui                             |
 
 ```text
 AuthKit.Core               contratos, modelos, máquina de estados, validación, tema   (sin dependencias de terceros)
@@ -19,7 +19,7 @@ AuthKit.Supabase           provider de Supabase Auth
 AuthKit.Blazor             componentes Blazor nativos (WebAssembly, Server, Auto)
 AuthKit.Clave              federación Cl@ve / eIDAS: petición, validación, identidad
 AuthKit.Clave.AspNetCore   MapClave(): endpoints de metadata, login y ACS
-contracts/                 @authkit/contracts, el contrato normativo que consumen los SDKs TypeScript
+contracts/                 authkit.contract.json, el contrato normativo que copian los SDKs TypeScript
 ```
 
 ## Personalización de la interfaz
@@ -88,14 +88,12 @@ app.MapClave(async (context, identity) =>
 La guía completa — checklist de CAID, dos entornos, estado distribuido y la tabla de claims — está
 en [`docs/clave.md`](docs/clave.md).
 
-## Paquete de contrato
+## El contrato
 
-`@authkit/contracts` se publica desde este repositorio durante el release. Los repositorios Angular
-y Aurelia lo consumen por versión, así que el contrato tiene un dueño y tres consumidores:
-
-```bash
-cd contracts && npm test     # paridad de campos, enums y operaciones con authkit.contract.json
-```
+`contracts/authkit.contract.json` es el contrato normativo. Los tipos .NET lo reflejan y
+`ContractParityTests` rompe el build si hay desviación. Los repositorios Angular y Aurelia mantienen
+una copia versionada y su CI falla si difiere de este fichero — sin paquete que publicar y sin orden
+de release. Ver [`contracts/README.md`](contracts/README.md).
 
 ## Prueba de intrusión
 
@@ -121,7 +119,7 @@ bash scripts/pentest-up.sh && bash scripts/pentest-live.sh
 ## Estructura del repositorio
 
 ```text
-contracts/            @authkit/contracts: authkit.contract.json + declaraciones TypeScript
+contracts/            authkit.contract.json, el contrato normativo que copian los SDKs TypeScript
 src/dotnet/           AuthKit.Core, AuthKit.Supabase, AuthKit.Blazor, AuthKit.Clave*
 tests/dotnet/         xUnit, bUnit y fixtures de protocolo
 security/             suites de pentest offline y live

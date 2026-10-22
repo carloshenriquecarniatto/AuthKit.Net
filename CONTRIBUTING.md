@@ -4,8 +4,8 @@
 
 1. **Everything is in English** — code, comments, documentation, commit messages, issues and PRs.
 2. **The contract is normative.** `contracts/authkit.contract.json` is the single source. A change
-   lands here first (with `npm run test:contracts`), then in the Angular and Aurelia repositories
-   with a version bump of `@authkit/contracts`.
+   lands here first, then in the Angular and Aurelia repositories by running their
+   `scripts/sync-contract.mjs` and updating the TypeScript declarations; their CI fails on drift.
 3. **No business logic in a renderer.** Validation, state transitions and error mapping belong to
    the core.
 4. **Security issues are never discussed in a public issue.** See [SECURITY.md](SECURITY.md).
@@ -16,9 +16,6 @@
 ```bash
 # .NET 10 SDK is required (see global.json)
 dotnet workload restore
-
-# Contract package tests
-npm run test:contracts
 
 # Git hooks (required)
 ./scripts/setup-hooks.sh
@@ -32,7 +29,6 @@ The hooks are also installed automatically by `npm install` through the `prepare
 dotnet build
 dotnet test
 dotnet format AuthKit.slnx --verify-no-changes
-npm run test:contracts
 ```
 
 ## Commit messages
@@ -55,7 +51,6 @@ The version is derived from these messages. `feat` bumps the minor, `fix`/`perf`
 
 - [ ] Tests cover the new behaviour (unit, and integration when the provider is involved).
 - [ ] `dotnet test` passes locally.
-- [ ] `npm run test:contracts` passes when the contract package changed.
 - [ ] No new token, URL or header is written to a log.
 - [ ] If the contract changed, it is versioned here and the consuming SDKs are updated separately.
 - [ ] Documentation updated (`docs/`, README or XML/TSDoc comments).

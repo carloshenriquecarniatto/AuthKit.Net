@@ -1,32 +1,27 @@
-# @authkit/contracts
+# The AuthKit contract
 
-The normative AuthKit contract, shared by every SDK. `authkit.contract.json` is the source of truth;
-this package also ships the TypeScript declarations and the four runtime helpers.
+`authkit.contract.json` is the normative contract shared by every AuthKit SDK. This repository owns
+it: the .NET types in `AuthKit.Core` mirror it, and `ContractParityTests` compares the C# surface
+with the JSON on every build.
+
+## How the other SDKs get it
+
+`AuthKit.Angular` and `AuthKit.Aurelia` keep a committed copy at `contracts/authkit.contract.json`
+and run two checks:
+
+1. **Parity** — each SDK's own test compares its TypeScript declarations with the JSON.
+2. **Drift** — CI downloads this file from `main` and fails if the committed copy differs.
+
+To update a TypeScript SDK after a contract change:
 
 ```bash
-npm install @authkit/contracts
+# in AuthKit.Angular or AuthKit.Aurelia, with AuthKit.Net checked out next to it
+node scripts/sync-contract.mjs            # copy from ../AuthKit.Net
+node scripts/sync-contract.mjs --remote   # or download from GitHub
 ```
 
-```ts
-import { authError, fail, type AuthSession } from '@authkit/contracts';
+Then update the TypeScript declarations in the same pull request; the parity test fails until the
+shapes match.
 
-// Tests only: the parsed JSON plus the hand-mirrored declaration map.
-import { AUTHKIT_CONTRACT, loadContract } from '@authkit/contracts/testing';
-```
-
-## Why a package
-
-Each SDK lives in its own repository with its own release cycle. Shipping the contract as a package
-means a change is versioned once and consumed by a fixed version, instead of three copies drifting
-apart.
-
-The .NET SDK is the canonical owner: `authkit.contract.json` lives next to `AuthKit.Core` and its
-`ContractParityTests` read it directly. Publishing this package is part of the .NET release.
-
-## Parity
-
-`AUTHKIT_CONTRACT` mirrors the TypeScript declarations by hand. Every SDK's test suite compares it
-with the JSON: add a field to a type and forget the map, and the build fails.
-
-Only `@authkit/contracts/testing` reads the filesystem. Browser bundles import the root entry point,
-which has no Node dependencies.
+There is no package to publish and no release ordering: the JSON is copied and verified, not
+installed.

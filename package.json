@@ -13,8 +13,7 @@
     "hooks": "node scripts/install-hooks.mjs",
     "format": "prettier --write \"**/*.{md,json,yml,yaml,ts,html,css}\"",
     "format:check": "prettier --check \"**/*.{md,json,yml,yaml,ts,html,css}\"",
-    "release": "semantic-release",
-    "test:contracts": "node --test contracts/test/*.test.mjs"
+    "release": "semantic-release"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

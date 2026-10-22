@@ -23,15 +23,4 @@ else
   echo "publish: NUGET_API_KEY is not set, skipping NuGet."
 fi
 
-if [ -n "${NPM_TOKEN:-}" ]; then
-  echo "publish: packing and pushing @authkit/contracts..."
-  (cd "$root/contracts" && npm test)
-
-  printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$root/contracts/.npmrc"
-  (cd "$root/contracts" && npm publish --access public --provenance)
-  rm -f "$root/contracts/.npmrc"
-else
-  echo "publish: NPM_TOKEN is not set, skipping @authkit/contracts."
-fi
-
 echo "publish: done."
