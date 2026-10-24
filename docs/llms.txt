@@ -1,6 +1,6 @@
 # AuthKit
 
-> Provider-agnostic authentication UI for .NET, with Supabase and Cl@ve as providers.
+> Provider-agnostic authentication UI for .NET, with Supabase as the bundled provider.
 > One contract, two SDKs: contracts/authkit.contract.json is normative and a parity test in each
 > language fails the build if either side drifts.
 
@@ -17,7 +17,6 @@
 - https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/README.es.md
 - https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/customization.md
 - https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/spec.md
-- https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/clave.md
 - https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/architecture.md
 - https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/threat-model.md
 - https://raw.githubusercontent.com/carloshenriquecarniatto/AuthKit/main/docs/pentest.md

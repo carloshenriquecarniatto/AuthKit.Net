@@ -1,5 +1,5 @@
 ---
-description: 'Native authentication UI for .NET, with Supabase and Cl@ve as providers.'
+description: 'Native authentication UI for .NET, with Supabase as the bundled provider.'
 layout: page
 title: AuthKit
 permalink: /
@@ -11,8 +11,6 @@ Authentication screens that are ready in one line, native to your stack.
 AuthKit.Core               contract, state machine, theming   (no third-party dependencies)
 AuthKit.Supabase           Supabase Auth provider
 AuthKit.Blazor             Blazor components (WASM, Server, Auto)
-AuthKit.Clave              Cl@ve / eIDAS federation
-AuthKit.Clave.AspNetCore   MapClave(): metadata, login, ACS
 ```
 
 ![Sign in form]({{ site.baseurl }}/assets/login.png)
@@ -51,7 +49,6 @@ The stack is disposable: credentials are generated per run, the database lives i
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | [README](https://github.com/carloshenriquecarniatto/AuthKit#readme)                                                                                                                                                                                                     | Install, quick start, repository layout                    |
 | [Specification](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/spec.md) · [PT](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/spec.pt-BR.md) · [ES](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/spec.es.md) | Normative scope, gates and quality rules                   |
-| [Cl@ve guide](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/clave.md)                                                                                                                                                                               | eIDAS login for .NET and Blazor                            |
 | [Architecture](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/architecture.md)                                                                                                                                                                       | Layers, hosting models and ADR-001 (MAUI)                  |
 | [Threat model](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/threat-model.md)                                                                                                                                                                       | 14 threats with the mitigation and the test that covers it |
 | [Penetration test](https://github.com/carloshenriquecarniatto/AuthKit/blob/main/docs/pentest.md)                                                                                                                                                                        | Offline, live and browser attacks                          |

@@ -42,24 +42,6 @@ public enum AuthErrorCode
     /// <summary>Anything not covered above. The message is safe to display.</summary>
     Unknown,
 
-    /// <summary>The user abandoned the federation at the gateway.</summary>
-    FederationCancelled,
-
-    /// <summary>A federation round trip failed. Details stay in server logs.</summary>
-    FederationFailed,
-
-    /// <summary>The granted assurance level was below the requested one.</summary>
-    LoaNotMet,
-
-    /// <summary>The signing certificate is unknown, expired or unacceptable.</summary>
-    CertificateInvalid,
-
-    /// <summary>The identity source did not return a verifiable identity.</summary>
-    IdentityNotVerified,
-
-    /// <summary>The assertion belongs to a different tenant than the one configured.</summary>
-    TenantMismatch,
-
     /// <summary>No provider is registered for the requested reference or audience.</summary>
     ProviderNotConfigured,
 
@@ -119,11 +101,6 @@ public static class AuthErrorMessageDefaults
         AuthErrorCode.MfaRequired => "A second factor is required.",
         AuthErrorCode.SessionExpired => "Your session expired. Sign in again.",
         AuthErrorCode.NetworkError => "The service could not be reached. Try again.",
-        AuthErrorCode.FederationCancelled => "The login was cancelled.",
-        AuthErrorCode.LoaNotMet => "The authentication level achieved is not sufficient for this service.",
-        AuthErrorCode.CertificateInvalid => "The authentication service certificate is not valid.",
-        AuthErrorCode.IdentityNotVerified => "Your identity could not be verified.",
-        AuthErrorCode.TenantMismatch => "The authentication belongs to another organisation.",
         AuthErrorCode.ProviderNotConfigured => "That sign-in option is not available.",
         AuthErrorCode.ProviderAmbiguous => "Choose which account you want to use.",
         AuthErrorCode.SessionConflict => "You are signed in to incompatible accounts.",
@@ -151,12 +128,6 @@ public static class AuthContractValues
             [AuthErrorCode.SessionExpired] = "session_expired",
             [AuthErrorCode.NetworkError] = "network_error",
             [AuthErrorCode.Unknown] = "unknown",
-            [AuthErrorCode.FederationCancelled] = "federation_cancelled",
-            [AuthErrorCode.FederationFailed] = "federation_failed",
-            [AuthErrorCode.LoaNotMet] = "loa_not_met",
-            [AuthErrorCode.CertificateInvalid] = "certificate_invalid",
-            [AuthErrorCode.IdentityNotVerified] = "identity_not_verified",
-            [AuthErrorCode.TenantMismatch] = "tenant_mismatch",
             [AuthErrorCode.ProviderNotConfigured] = "provider_not_configured",
             [AuthErrorCode.ProviderAmbiguous] = "provider_ambiguous",
             [AuthErrorCode.SessionConflict] = "session_conflict",

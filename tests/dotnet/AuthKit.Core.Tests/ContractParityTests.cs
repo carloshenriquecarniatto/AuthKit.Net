@@ -22,11 +22,6 @@ public sealed class ContractParityTests
         ["AuthCapabilities"] = typeof(AuthCapabilities),
         ["AuthTheme"] = typeof(AuthTheme),
         ["AuthMessageKey"] = typeof(AuthMessageKey),
-        ["AuthIdentity"] = typeof(AuthIdentity),
-        ["AuthDocumentType"] = typeof(AuthDocumentType),
-        ["AuthAssuranceLevel"] = typeof(AuthAssuranceLevel),
-        ["AuthFederationMethod"] = typeof(AuthFederationMethod),
-        ["AuthFederationProvider"] = typeof(AuthFederationProvider),
         ["AuthProviderSnapshot"] = typeof(AuthProviderSnapshot),
         ["AuthProviderRef"] = typeof(AuthProviderRef)
     };
@@ -39,7 +34,6 @@ public sealed class ContractParityTests
         ["int?"] = typeof(int?),
         ["datetime"] = typeof(DateTimeOffset),
         ["datetime?"] = typeof(DateTimeOffset?),
-        ["date?"] = typeof(DateOnly?),
         ["record<string,string>"] = typeof(IReadOnlyDictionary<string, string>),
         ["string[]"] = typeof(IReadOnlyList<string>),
         ["AuthUser"] = typeof(AuthUser),
@@ -47,13 +41,7 @@ public sealed class ContractParityTests
         ["AuthError?"] = typeof(AuthError),
         ["AuthNextStep"] = typeof(AuthNextStep),
         ["AuthErrorCode"] = typeof(AuthErrorCode),
-        ["AuthIdentity?"] = typeof(AuthIdentity),
-        ["AuthProviderSnapshot?"] = typeof(AuthProviderSnapshot),
-        ["AuthFederationProvider[]"] = typeof(IReadOnlyList<AuthFederationProvider>),
-        ["AuthFederationMethod[]"] = typeof(IReadOnlyList<AuthFederationMethod>),
-        ["AuthAssuranceLevel[]"] = typeof(IReadOnlyList<AuthAssuranceLevel>),
-        ["AuthAssuranceLevel"] = typeof(AuthAssuranceLevel),
-        ["AuthDocumentType"] = typeof(AuthDocumentType)
+        ["AuthProviderSnapshot?"] = typeof(AuthProviderSnapshot)
     };
 
     private static JsonDocument LoadContract()
@@ -128,7 +116,7 @@ public sealed class ContractParityTests
     public void Every_contract_operation_exists_on_a_dotnet_contract_interface()
     {
         using var contract = LoadContract();
-        var methods = new[] { typeof(IAuthProvider), typeof(IServerDrivenAuthProvider) }
+        var methods = new[] { typeof(IAuthProvider) }
             .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance))
             .Select(m => m.Name)
             .ToArray();

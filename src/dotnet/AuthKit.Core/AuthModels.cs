@@ -28,12 +28,6 @@ public sealed record AuthUser
     public string? DisplayName { get; init; }
 
     /// <summary>
-    /// Legal identity, when the provider is a federation that returns one. Additive in contract
-    /// 1.1.0; password-based providers leave it <see langword="null"/>.
-    /// </summary>
-    public AuthIdentity? Identity { get; init; }
-
-    /// <summary>
     /// User metadata. Values are strings so the contract can be reproduced identically
     /// in TypeScript; callers that need richer values should parse them explicitly.
     /// </summary>
@@ -71,7 +65,7 @@ public sealed record AuthSession
 
     /// <summary>
     /// Provenance of the session, written once at issue time and never recomputed. Additive in
-    /// contract 1.1.0; single-provider hosts may leave it <see langword="null"/>.
+    /// contract 2.0.0; single-provider hosts may leave it <see langword="null"/>.
     /// </summary>
     public AuthProviderSnapshot? Provider { get; init; }
 
@@ -166,7 +160,7 @@ public enum AuthState
     /// <summary>Waiting for the user to type an OTP.</summary>
     AwaitingOtp,
 
-    /// <summary>The user is being sent to an external federation. Additive in contract 1.1.0.</summary>
+    /// <summary>The user is being sent to an external provider.</summary>
     Redirecting,
 
     /// <summary>A session is available.</summary>
@@ -205,10 +199,4 @@ public sealed record AuthCapabilities
 
     /// <summary>Social providers accepted by <see cref="IAuthProvider.BeginOAuthAsync"/>.</summary>
     public IReadOnlyList<string> SocialProviders { get; init; } = [];
-
-    /// <summary>
-    /// Server-driven federation providers. Additive in contract 1.1.0. The UI renders exactly
-    /// these descriptors; it never switches on a provider id or a method id.
-    /// </summary>
-    public IReadOnlyList<AuthFederationProvider> Federation { get; init; } = [];
 }

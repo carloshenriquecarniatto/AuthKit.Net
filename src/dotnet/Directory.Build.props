@@ -33,7 +33,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <PackageTags>auth;authentication;supabase;clave;eidas;saml;blazor;angular;aurelia;authkit</PackageTags>
+    <PackageTags>auth;authentication;supabase;blazor;angular;authkit</PackageTags>
   </PropertyGroup>
 
   <Import Project="version.props" Condition="Exists('version.props')" />

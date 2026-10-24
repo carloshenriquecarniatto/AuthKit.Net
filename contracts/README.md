@@ -6,7 +6,7 @@ with the JSON on every build.
 
 ## How the other SDKs get it
 
-`AuthKit.Angular` and `AuthKit.Aurelia` keep a committed copy at `contracts/authkit.contract.json`
+`AuthKit.Angular` keeps a committed copy at `contracts/authkit.contract.json`
 and run two checks:
 
 1. **Parity** — each SDK's own test compares its TypeScript declarations with the JSON.
@@ -15,7 +15,7 @@ and run two checks:
 To update a TypeScript SDK after a contract change:
 
 ```bash
-# in AuthKit.Angular or AuthKit.Aurelia, with AuthKit.Net checked out next to it
+# in AuthKit.Angular, with AuthKit.Net checked out next to it
 node scripts/sync-contract.mjs            # copy from ../AuthKit.Net
 node scripts/sync-contract.mjs --remote   # or download from GitHub
 ```

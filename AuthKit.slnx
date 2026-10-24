@@ -5,13 +5,9 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/dotnet/AuthKit.Blazor/AuthKit.Blazor.csproj" />
-    <Project Path="src/dotnet/AuthKit.Clave/AuthKit.Clave.csproj" />
-    <Project Path="src/dotnet/AuthKit.Clave.AspNetCore/AuthKit.Clave.AspNetCore.csproj" />
     <Project Path="src/dotnet/AuthKit.Core/AuthKit.Core.csproj" />
     <Project Path="src/dotnet/AuthKit.Supabase/AuthKit.Supabase.csproj" />
     <Project Path="tests/dotnet/AuthKit.Blazor.Tests/AuthKit.Blazor.Tests.csproj" />
-    <Project Path="tests/dotnet/AuthKit.Clave.Tests/AuthKit.Clave.Tests.csproj" />
-    <Project Path="tests/dotnet/AuthKit.Clave.AspNetCore.Tests/AuthKit.Clave.AspNetCore.Tests.csproj" />
     <Project Path="tests/dotnet/AuthKit.Core.Tests/AuthKit.Core.Tests.csproj" />
     <Project Path="tests/dotnet/AuthKit.Supabase.Tests/AuthKit.Supabase.Tests.csproj" />
   </Folder>

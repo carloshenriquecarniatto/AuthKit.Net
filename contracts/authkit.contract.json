@@ -1,5 +1,5 @@
 {
-  "contractVersion": "1.1.0",
+  "contractVersion": "2.0.0",
   "description": "Normative AuthKit contract shared by the .NET and TypeScript implementations. Any change here requires a matching change in both SDKs and in their parity tests.",
   "types": {
     "AuthUser": {
@@ -10,8 +10,7 @@
         "emailConfirmedAt": "datetime?",
         "phoneConfirmedAt": "datetime?",
         "displayName": "string?",
-        "metadata": "record<string,string>",
-        "identity": "AuthIdentity?"
+        "metadata": "record<string,string>"
       }
     },
     "AuthSession": {
@@ -38,12 +37,6 @@
         "session_expired",
         "network_error",
         "unknown",
-        "federation_cancelled",
-        "federation_failed",
-        "loa_not_met",
-        "certificate_invalid",
-        "identity_not_verified",
-        "tenant_mismatch",
         "provider_not_configured",
         "provider_ambiguous",
         "session_conflict",
@@ -58,7 +51,12 @@
       }
     },
     "AuthNextStep": {
-      "enum": ["none", "confirm_email", "verify_otp", "mfa"]
+      "enum": [
+        "none",
+        "confirm_email",
+        "verify_otp",
+        "mfa"
+      ]
     },
     "AuthResult": {
       "fields": {
@@ -88,51 +86,7 @@
         "phoneOtp": "bool",
         "passwordRecovery": "bool",
         "mfa": "bool",
-        "socialProviders": "string[]",
-        "federation": "AuthFederationProvider[]"
-      }
-    },
-    "AuthDocumentType": {
-      "enum": ["dni", "nie", "cif", "unknown"]
-    },
-    "AuthAssuranceLevel": {
-      "enum": ["low", "substantial", "high"]
-    },
-    "AuthIdentity": {
-      "fields": {
-        "subject": "string",
-        "documentType": "AuthDocumentType",
-        "documentId": "string",
-        "documentIdRaw": "string?",
-        "givenName": "string?",
-        "familyName": "string?",
-        "dateOfBirth": "date?",
-        "level": "AuthAssuranceLevel",
-        "method": "string",
-        "tenant": "string?",
-        "representedDocumentId": "string?",
-        "authenticatedAt": "datetime"
-      }
-    },
-    "AuthFederationMethod": {
-      "fields": {
-        "id": "string",
-        "displayName": "string",
-        "description": "string?",
-        "levels": "AuthAssuranceLevel[]",
-        "recommended": "bool"
-      }
-    },
-    "AuthFederationProvider": {
-      "fields": {
-        "id": "string",
-        "kind": "string",
-        "displayName": "string",
-        "description": "string?",
-        "iconUrl": "string?",
-        "methods": "AuthFederationMethod[]",
-        "levels": "AuthAssuranceLevel[]",
-        "isPrimary": "bool"
+        "socialProviders": "string[]"
       }
     },
     "AuthProviderSnapshot": {
@@ -299,25 +253,6 @@
       "name": "signOut",
       "parameters": {},
       "returns": "void"
-    },
-    {
-      "name": "beginFederation",
-      "parameters": {
-        "providerRef": "string",
-        "level": "AuthAssuranceLevel",
-        "method": "string?",
-        "returnUrl": "string?"
-      },
-      "returns": "string",
-      "notes": "Returns the host login URL. Server-driven federations never navigate on their own."
-    },
-    {
-      "name": "completeFederation",
-      "parameters": {
-        "callbackUrl": "string"
-      },
-      "returns": "AuthResult",
-      "notes": "Reads the host's redirect outcome. Performs no network call and no token exchange."
     }
   ]
 }

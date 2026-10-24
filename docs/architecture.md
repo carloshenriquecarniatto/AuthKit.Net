@@ -38,9 +38,9 @@ A renderer that grows business logic is a bug.
 The store is selected explicitly in `AddAuthKitBlazor(...)`. There is no "auto-detect" that could
 silently put a refresh token in a browser on Server.
 
-## Angular and Aurelia
+## Angular
 
-Those SDKs live in their own repositories (`AuthKit.Angular`, `AuthKit.Aurelia`) and consume the
+That SDK lives in its own repository (`AuthKit.Angular`) and consumes the
 same contract through a committed copy of `contracts/authkit.contract.json`, checked by CI. The
 diagram above still describes the shape; only the repository boundary is new.
 

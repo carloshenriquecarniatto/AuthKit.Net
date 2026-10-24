@@ -117,14 +117,14 @@
                 @(_mode == EmailMode.SignUp ? Text(AuthMessageKey.SignUp) : Text(AuthMessageKey.SignIn))
             </button>
 
-            @if (_mode == EmailMode.SignIn)
+            @if (_mode == EmailMode.SignIn && ShowForgotPassword)
             {
                 <button class="ak-link" type="button" @onclick="() => { _mode = EmailMode.Recover; _notice = null; }">
                     @Text(AuthMessageKey.ForgotPassword)
                 </button>
             }
 
-            @if (Capabilities.SignUp)
+            @if (Capabilities.SignUp && ShowSignUp)
             {
                 <button class="ak-link" type="button" @onclick="ToggleMode">
                     @(_mode == EmailMode.SignUp ? Text(AuthMessageKey.HaveAccount) : Text(AuthMessageKey.DontHaveAccount))
@@ -186,6 +186,14 @@
     /// <summary>Prefills the password field.</summary>
     [Parameter]
     public string? PrefilledPassword { get; set; }
+
+    /// <summary>Hides the "forgot your password?" link on the sign-in form.</summary>
+    [Parameter]
+    public bool ShowForgotPassword { get; set; } = true;
+
+    /// <summary>Hides the sign-in/sign-up switch even when the provider supports sign-up.</summary>
+    [Parameter]
+    public bool ShowSignUp { get; set; } = true;
 
     private AuthCapabilities Capabilities => Provider.Capabilities;
 

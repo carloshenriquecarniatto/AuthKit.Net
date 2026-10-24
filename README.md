@@ -10,15 +10,12 @@ the same base name and their own release cycle:
 | Platform | Repository                                                                    |
 | -------- | ----------------------------------------------------------------------------- |
 | Angular  | [AuthKit.Angular](https://github.com/carloshenriquecarniatto/AuthKit.Angular) |
-| Aurelia  | [AuthKit.Aurelia](https://github.com/carloshenriquecarniatto/AuthKit.Aurelia) |
 | Contract | `contracts/authkit.contract.json`, owned here                                 |
 
 ```text
 AuthKit.Core               contracts, models, state machine, validation, theming   (no third-party dependencies)
 AuthKit.Supabase           Supabase Auth provider
 AuthKit.Blazor             native Blazor components (WebAssembly, Server, Auto)
-AuthKit.Clave              Cl@ve / eIDAS federation: request, validation, identity
-AuthKit.Clave.AspNetCore   MapClave(): metadata, login and ACS endpoints
 contracts/                 authkit.contract.json, the normative contract copied by the TypeScript SDKs
 ```
 
@@ -32,8 +29,6 @@ code: theme tokens, `ak-*` CSS classes, and a headless provider.
 - **Native rendering.** Razor components for Blazor. No React inside a webview, no JS interop beyond
   `sessionStorage`.
 - **Provider-agnostic.** `IAuthProvider` is the only dependency the UI has.
-- **Federation is a library, not a service.** `AuthKit.Clave` runs inside the host, validates the
-  assertion and stops at "here is a validated identity". It never signs anyone in.
 - **Security is part of the contract.** Server-side tokens never reach the browser, service-role
   keys are rejected at startup, provider error text never reaches the UI, and a pentest suite blocks
   every release.
@@ -62,36 +57,10 @@ builder.Services.AddAuthKitBlazor(AuthSessionStorageMode.BrowserSession);
 <AuthKitSocials Providers="@(new[] { "github", "google" })" />
 ```
 
-## Quick start — Cl@ve
-
-```csharp
-builder.Services.AddClave(
-    clave =>
-    {
-        clave.Environment = ClaveEnvironment.Preproduction;
-        clave.EntityId = "https://sede.example.es/clave/metadata";
-        clave.AcsUrl = "https://sede.example.es/clave/acs";
-        clave.SigningCertificate = certificates.Current("caib");
-        clave.PasarelaSigningCertificate = trust.Anchors.Clave;
-        clave.Tenant = "caib";
-        clave.SubjectKey = secrets.SubjectKey;
-    },
-    http => http.RoutePrefix = "/clave");
-
-app.MapClave(async (context, identity) =>
-{
-    await context.SignInAsync(identity.ToClaimsPrincipal("clientes/clave"));
-    return Results.Redirect(identity.ReturnUrl ?? "/");
-});
-```
-
-The full guide — CAID checklist, two environments, distributed state and the claims table — is in
-[`docs/clave.md`](docs/clave.md).
-
 ## The contract
 
 `contracts/authkit.contract.json` is the normative contract. The .NET types mirror it and
-`ContractParityTests` fails the build on drift. The Angular and Aurelia repositories keep a
+`ContractParityTests` fails the build on drift. The Angular repository keeps a
 committed copy and their CI fails if it differs from this file — no package to publish, no release
 ordering. See [`contracts/README.md`](contracts/README.md).
 
@@ -108,23 +77,21 @@ bash scripts/pentest-up.sh && bash scripts/pentest-live.sh
 
 | Area                       | State                                                                   |
 | -------------------------- | ----------------------------------------------------------------------- |
-| Contract (`1.1.0`)         | Stable (additive over 1.0.0)                                            |
+| Contract (`2.0.0`)         | Stable (breaking: provider surface narrowed to authentication)         |
 | `AuthKit.Core`             | Email, magic link, OTP (email + phone), recovery, OAuth, capabilities   |
 | `AuthKit.Supabase`         | Complete provider, error mapping, session restore                       |
-| `AuthKit.Blazor`           | Email, magic link, reset, socials, callback, Cl@ve methods and callback |
-| `AuthKit.Clave`            | eIDAS request/response, pinned certificate, replay, LoA, identity       |
-| `AuthKit.Clave.AspNetCore` | `MapClave()` metadata/login/ACS, distributed state, return-URL policy   |
+| `AuthKit.Blazor`           | Email, magic link, reset, socials, callback |
 | MAUI                       | Planned: same core, XAML shell, `WebAuthenticator`                      |
 
 ## Repository layout
 
 ```text
 contracts/            authkit.contract.json, the normative contract copied by the TypeScript SDKs
-src/dotnet/           AuthKit.Core, AuthKit.Supabase, AuthKit.Blazor, AuthKit.Clave*
+src/dotnet/           AuthKit.Core, AuthKit.Supabase, AuthKit.Blazor
 tests/dotnet/         xUnit, bUnit and protocol fixtures
 security/             offline and live pentest suites
 samples/messages/     committed, anonymised protocol fixtures
-docs/                 spec, threat model, architecture, Cl@ve guide, UI parity
+docs/                 spec, threat model, architecture, UI parity
 ```
 
 ## Contributing

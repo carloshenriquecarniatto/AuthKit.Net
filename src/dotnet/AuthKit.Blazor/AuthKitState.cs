@@ -250,6 +250,13 @@ public abstract class AuthKitComponentBase : ComponentBase, IDisposable
     [Parameter]
     public bool IncludeStyles { get; set; } = true;
 
+    /// <summary>
+    /// Per-instance message overrides. Missing keys fall back to the configured catalog, so a host
+    /// can reword a single label without replacing every string.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyDictionary<AuthMessageKey, string>? Labels { get; set; }
+
     protected AuthKitOptions Options => _options ??= Services.GetService<AuthKitOptions>() ?? new AuthKitOptions();
 
     protected IAuthMessages Messages => Options.Messages;
@@ -280,7 +287,17 @@ public abstract class AuthKitComponentBase : ComponentBase, IDisposable
         return result;
     }
 
-    protected string Text(AuthMessageKey key, string? provider = null) => Messages.Resolve(key, provider);
+    protected string Text(AuthMessageKey key, string? provider = null)
+    {
+        if (Labels is not null && Labels.TryGetValue(key, out var label))
+        {
+            return provider is null
+                ? label
+                : label.Replace("{provider}", provider, StringComparison.Ordinal);
+        }
+
+        return Messages.Resolve(key, provider);
+    }
 
     /// <inheritdoc />
     public virtual void Dispose()

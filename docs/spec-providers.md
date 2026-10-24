@@ -2,9 +2,8 @@
 
 **English** · Português · Español _(translations pending)_
 
-Status: **draft, normative once accepted**. Target contract version: **1.1.0** (additive). Extends
-[`spec.md`](spec.md). Referenced by [`spec-clave.md`](spec-clave.md).
-
+Status: **draft, normative once accepted**. Target contract version: **2.0.0**. Extends
+[`spec.md`](spec.md).
 ---
 
 ## 1. Problem
@@ -14,7 +13,7 @@ exists, and every component binds to it.
 
 Real hosts do not have one audience. A Spanish public-sector backoffice typically needs:
 
-- **Citizens** entering through Cl@ve, a certificate or an EUDI wallet;
+- **Citizens** entering through a certificate, an EUDI wallet or another OIDC provider;
 - **Employees** entering through the organisation's Entra ID tenant, LDAP or a certificate;
 - **Supplier or partner organisations** entering through a separate federated tenant.
 
@@ -33,7 +32,7 @@ two different populations, are two providers. Identity is therefore always compo
 | Concept      | Meaning                                                                                 |
 | ------------ | --------------------------------------------------------------------------------------- |
 | **Provider** | One registered identity source. Named by the host, never auto-derived                   |
-| **Kind**     | The technology behind it: `supabase`, `entra`, `clave`, `certificate`, `ldap`, `wallet` |
+| **Kind**     | The technology behind it: `supabase`, `entra`, `oidc`, `certificate`, `ldap`, `wallet` |
 | **Audience** | **Any identifier the host declares.** No enum, no reserved catalogue — see §2.1         |
 | **Origin**   | Where it runs: `self_hosted`, `cloud`, `third_party` — audit metadata, not routing      |
 | **Ref**      | The canonical identity: `audience/providerId`, e.g. `clientes/supabase-clientes`        |
@@ -42,7 +41,7 @@ two different populations, are two providers. Identity is therefore always compo
 ```text
 audience: intranet               audience: clientes                audience: socios
 ├── supabase-dev  (Supabase)     ├── supabase-clientes (Supabase)  ├── supabase-socios (Supabase)
-└── entra-staff   (Entra ID)     ├── clave             (Cl@ve)     └── entra-b2b (Entra External ID)
+└── entra-staff   (Entra ID)     ├── oidc              (OIDC)      └── entra-b2b (Entra External ID)
                                  └── certificate       (certificate)
 ```
 
@@ -90,7 +89,7 @@ public static class Audiences
 
 services.AddAuthKit(kit =>
 {
-    kit.AddClave("clave", o => { … }, audience: Audiences.Clientes);
+    kit.AddSupabase("supabase-clientes", o => { … }, audience: Audiences.Clientes);
     kit.AddEntra("entra-staff", o => { … }, audience: Audiences.Intranet);
 });
 
@@ -112,10 +111,6 @@ export type Audience = (typeof AUDIENCES)[keyof typeof AUDIENCES];
 An unknown audience is a startup error, not a runtime fallback: a typo in a policy must fail the
 build or the boot, never let a request through.
 
-Note that `AuthKit.Clave` is **one provider that itself offers several methods**. Methods are not
-providers. This is the distinction that keeps the UI from exploding: three buttons for a citizen,
-one for a clerk.
-
 ## 3. Routing
 
 Routing must be deterministic and auditable. Six rules, evaluated in order, and nothing else:
@@ -124,7 +119,7 @@ Routing must be deterministic and auditable. Six rules, evaluated in order, and 
 | --- | ------------------------------------------------------------------ | ---------------------------------------------------- |
 | 1   | An explicit `providerRef` (`audience/id`) or `providerId` wins     | `<ak-email provider="clientes/supabase-clientes" />` |
 | 2   | Otherwise, the `Audience` in scope wins                            | page declares `audience="intranet"`                  |
-| 3   | Otherwise, the audience's provider marked `IsPrimary` wins         | `clave` is primary for `clientes`                    |
+| 3   | Otherwise, the audience's provider marked `IsPrimary` wins         | `supabase-clientes` is primary for `clientes`                    |
 | 4   | Otherwise, if the audience has exactly one provider, that one wins | single-provider audiences are unambiguous            |
 | 5   | Otherwise, resolution fails with `provider_ambiguous`              | never guessed, never first-registered                |
 | 6   | Resolution never crosses an audience boundary                      | a `clientes` screen never falls back to `intranet`   |
@@ -213,10 +208,10 @@ where a provider is identified by kind alone.
 
 When a citizen session and a staff session are both alive:
 
-- `Sessions` contains both, keyed by canonical ref (`clientes/clave`, `intranet/entra-staff`).
+- `Sessions` contains both, keyed by canonical ref (`clientes/supabase-clientes`, `intranet/entra-staff`).
 - `StateChanged` fires once per transition, with the ref set, so a listener can tell who changed.
 - The UI never merges them. A screen is bound to one provider at a time through its scope.
-- `SignOutAsync("clientes/clave")` leaves the staff session intact. `SignOutAsync()` clears both.
+- `SignOutAsync("clientes/supabase-clientes")` leaves the staff session intact. `SignOutAsync()` clears both.
 
 ### 4.2 The session carries its own provenance
 
@@ -229,13 +224,13 @@ audited — a provider can be de-registered, renamed, or re-pointed at another t
 ```csharp
 public sealed record AuthProviderSnapshot
 {
-    public required string Ref { get; init; }        // clientes/clave
+    public required string Ref { get; init; }        // clientes/supabase-clientes
     public required string Audience { get; init; }   // clientes
-    public required string ProviderId { get; init; } // clave
-    public required string Kind { get; init; }       // clave
-    public required string DisplayName { get; init; }// Cl@ve
+    public required string ProviderId { get; init; } // supabase-clientes
+    public required string Kind { get; init; }       // supabase-clientes
+    public required string DisplayName { get; init; }// Supabase
     public required string Origin { get; init; }     // third_party
-    public string? Tenant { get; init; }             // caib — federation-level, optional
+    public string? Tenant { get; init; }             // caib — provider-level, optional
     public DateTimeOffset CapturedAt { get; init; }
 }
 ```
@@ -289,22 +284,13 @@ builder.Services.AddAuthKit(kit =>
         o.ClientId = "…";
     }, audience: "intranet", origin: "third_party");
 
-    // External clients — a separate Supabase project, same kind, same audience as Cl@ve.
+    // External clients — a separate Supabase project, same kind, same audience as the other client provider.
     kit.AddSupabase("supabase-clientes", o =>
     {
         o.Url = "https://clients.example";
         o.AnonKey = "…";
     }, audience: "clientes", kind: "supabase", isPrimary: true);
 
-    // External clients — Spanish citizens. The SAML side runs inside this host's own
-    // server via AddAuthKitClave(); this registration only declares how it appears in the UI.
-    kit.AddClave("clave", o =>
-    {
-        o.Tenant    = "caib";                   // local label, used in claims and audit
-        o.LoginPath = "/clave/login";           // the route the host mapped with MapClave()
-        o.Methods   = [ClaveMethod.Movil, ClaveMethod.Permanente, ClaveMethod.Pin];
-        o.Levels    = [AuthAssuranceLevel.Substantial, AuthAssuranceLevel.High];
-    }, audience: "clientes", kind: "clave", origin: "self_hosted");
 
     // Partner organisations — a third instance of the same kind, different audience.
     kit.AddSupabase("supabase-socios", o => { … }, audience: "socios", kind: "supabase");
@@ -312,7 +298,7 @@ builder.Services.AddAuthKit(kit =>
 ```
 
 The ref of each is computed, not typed: `intranet/supabase-dev`, `intranet/entra-staff`,
-`clientes/supabase-clientes`, `clientes/clave`, `socios/supabase-socios`.
+`clientes/supabase-clientes`, `clientes/supabase-clientes`, `socios/supabase-socios`.
 
 Rules enforced at startup:
 
@@ -343,7 +329,7 @@ Components gain two optional parameters: `provider` and `audience`.
   <AuthKitEmail OnSignInComplete="GoHome" />
 </AuthKitAudience>
 
-<ak-federation audience="clientes" />
+<ak-email audience="clientes" />
 ```
 
 `<AuthKitAudience>` / `<ak-audience>` sets the ambient audience for its subtree through a cascading
@@ -370,7 +356,7 @@ and `clientes` audiences, "Supabase" alone is meaningless — the badge reads `C
 or `Intranet · Supabase`, and the audit trail records the full ref. Silent ambiguity about "who am I
 acting as" is a security problem in administrative software, not a design preference (R-17, R-23).
 
-## 8. Contract changes — 1.1.0 (additive)
+## 8. Contract changes — 2.0.0
 
 | Type                        | Change                                                                                           |
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -394,7 +380,7 @@ tests assert that no code path mutates them.
 | R-16 | Duplicate ref, duplicate display name per audience, duplicate primary, or an unrenderable provider fails at startup                                                      |
 | R-17 | Screens with more than one live session display which provider is in use, by audience and display name                                                                   |
 | R-18 | Sessions are never merged, compared as interchangeable, or passed across providers                                                                                       |
-| R-19 | The OAuth/federation state store is keyed by ref; two concurrent flows must not collide                                                                                  |
+| R-19 | The OAuth state store is keyed by ref; two concurrent flows must not collide                                                                                  |
 | R-20 | Routing never consults kind, host name, headers, capability shape or registration order                                                                                  |
 | R-21 | A token issued by one provider is never sent to another provider's backend                                                                                               |
 | R-22 | `SignOutAsync(ref)` clears exactly one provider; `SignOutAsync()` clears all, in reverse registration order                                                              |
@@ -413,7 +399,7 @@ Appended to `docs/threat-model.md` as T-18 … T-23.
 | T-18 | Provider shadowing — a second registration overrides the real one                                                                 | Duplicate ref is fatal at startup (R-16)                                                              | `duplicate_provider_ref_fails_at_startup`             |
 | T-19 | Vault key confusion — a session loaded under the wrong provider                                                                   | Session ref compared to the vault key on load (R-18)                                                  | `session_under_wrong_key_is_discarded`                |
 | T-20 | Cross-provider token use — client token sent to an internal API                                                                   | Ref carried in the token; resource servers validate it; no reuse across providers (R-21, R-25)        | `token_is_never_sent_to_another_provider`             |
-| T-21 | State collision between two concurrent federations                                                                                | State store namespaced per ref (R-19)                                                                 | `two_concurrent_federations_do_not_collide`           |
+| T-21 | State collision between two concurrent OAuth flows                                                                                | State store namespaced per ref (R-19)                                                                 | `two_concurrent_oauth_flows_do_not_collide`           |
 | T-22 | Ambiguous routing silently picks the wrong audience                                                                               | Rules 5–6 fail loudly; no fallback (R-20)                                                             | `ambiguous_audience_returns_provider_ambiguous`       |
 | T-23 | **Indistinguishable providers** — two same-kind providers in one audience, and the citizen or the operator cannot tell them apart | Unique display name per audience (R-16); kind never a routing key; badge shows audience + name (R-17) | `duplicate_display_name_in_audience_fails_at_startup` |
 

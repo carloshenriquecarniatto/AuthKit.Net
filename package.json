@@ -2,7 +2,7 @@
   "name": "authkit-net",
   "version": "0.1.0",
   "private": true,
-  "description": "AuthKit for .NET: core contracts, the Supabase provider, Blazor components and the Cl@ve/eIDAS federation library.",
+  "description": "AuthKit for .NET: core contracts, the Supabase provider and native Blazor components.",
   "license": "MIT",
   "repository": {
     "type": "git",

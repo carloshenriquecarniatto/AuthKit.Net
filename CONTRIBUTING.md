@@ -4,7 +4,7 @@
 
 1. **Everything is in English** — code, comments, documentation, commit messages, issues and PRs.
 2. **The contract is normative.** `contracts/authkit.contract.json` is the single source. A change
-   lands here first, then in the Angular and Aurelia repositories by running their
+   lands here first, then in the Angular repository by running its
    `scripts/sync-contract.mjs` and updating the TypeScript declarations; their CI fails on drift.
 3. **No business logic in a renderer.** Validation, state transitions and error mapping belong to
    the core.
